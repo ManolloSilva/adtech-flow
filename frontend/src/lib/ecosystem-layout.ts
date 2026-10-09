@@ -15,11 +15,16 @@ export interface NodePosition {
   y: number;
 }
 
-const COLUMN = 260;
-const ROW = 130;
+/** Horizontal spacing between supply-chain columns, in canvas units. */
+export const COLUMN_SPACING = 260;
+/** Vertical spacing between nodes within a column, in canvas units. */
+export const ROW_SPACING = 130;
+
+const COLUMN = COLUMN_SPACING;
+const ROW = ROW_SPACING;
 
 /** Column assignment per category. */
-const COLUMN_INDEX: Record<string, number> = {
+export const COLUMN_INDEX: Record<string, number> = {
   publisher: 0,
   cmp: 1,
   audience: 1,
@@ -30,20 +35,30 @@ const COLUMN_INDEX: Record<string, number> = {
   verification: 4,
 };
 
-/** Vertical offset per node so same-column nodes stack cleanly. */
-const ROW_OFFSET: Record<string, number> = {
-  'node-pub-nytimes': 1,
-  'node-cmp-onetrust': -1.2,
-  'node-audience-permutive': 0,
-  'node-id-liveramp': 0.6,
-  'node-id-sharedid': 1.4,
-  'node-adserver-gam': 0.4,
-  'node-verification-ias': 1.6,
+/**
+ * Intra-column ordering.
+ *
+ * Nodes within a column are listed in reading order so the supply chain reads
+ * top-to-bottom consistently. Previously this was expressed as per-node pixel
+ * `ROW_OFFSET`s, which silently stacked OneTrust on top of Usercentrics whenever
+ * the two landed adjacent — the layout must not depend on a node's index
+ * matching a hardcoded constant.
+ */
+const COLUMN_ORDER: Record<string, string[]> = {
+  publisher: ['node-pub-nytimes', 'node-pub-cnn', 'node-pub-guardian'],
+  cmp: ['node-cmp-onetrust', 'node-cmp-cookiebot', 'node-cmp-quantcast'],
+  audience: ['node-audience-permutive'],
+  identity: ['node-id-liveramp', 'node-id-sharedid'],
+  adserver: ['node-adserver-gam', 'node-adserver-mock'],
+  verification: ['node-verification-ias'],
 };
 
 /**
- * Computes a deterministic position for every node.
- * Grouped by category column, then ordered by id within the column for stability.
+ * Computes a deterministic, overlap-free position for every node.
+ *
+ * Each column is laid out as an evenly spaced stack, so no two nodes can ever
+ * collide regardless of how many categories share the column or how many nodes
+ * are present.
  */
 export function computeLayout(nodes: EcosystemNodeData[]): NodePosition[] {
   const byColumn = new Map<number, EcosystemNodeData[]>();
@@ -58,15 +73,35 @@ export function computeLayout(nodes: EcosystemNodeData[]): NodePosition[] {
   const positions: NodePosition[] = [];
 
   for (const [column, bucket] of [...byColumn.entries()].sort((a, b) => a[0] - b[0])) {
-    bucket.sort((a, b) => a.id.localeCompare(b.id));
+    // Known nodes first, in curated order. Iterate each *category* once (not each
+    // node) so a category's list is not repeated for every node it contains.
+    const presentIds = new Set(bucket.map((n) => n.id));
+    const seen = new Set<string>();
+    const order: EcosystemNodeData[] = [];
 
-    bucket.forEach((node, index) => {
-      const baseRow = index - (bucket.length - 1) / 2;
-      const offset = ROW_OFFSET[node.id] ?? 0;
+    for (const node of bucket) {
+      for (const id of COLUMN_ORDER[node.category] ?? []) {
+        if (presentIds.has(id) && !seen.has(id)) {
+          seen.add(id);
+          order.push(bucket.find((n) => n.id === id)!);
+        }
+      }
+    }
+
+    // Anything the curated order does not know about sorts after, alphabetically,
+    // so the layout stays deterministic as the ETL discovers new entities.
+    const remaining = bucket
+      .filter((n) => !seen.has(n.id))
+      .sort((a, b) => a.id.localeCompare(b.id));
+
+    const ordered = [...order, ...remaining];
+
+    ordered.forEach((node, index) => {
+      const row = index - (ordered.length - 1) / 2;
       positions.push({
         id: node.id,
         x: column * COLUMN,
-        y: (baseRow + offset) * ROW,
+        y: row * ROW,
       });
     });
   }

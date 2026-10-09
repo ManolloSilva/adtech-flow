@@ -75,10 +75,53 @@ describe('activePhasesFor', () => {
       'BIDS_COLLECTED',
       'TIMEOUT_APPLIED',
       'GAM_ARBITRATION',
-      'AD_RENDERED',
     ]) {
       expect(phases).toContain(mandatory);
     }
+  });
+});
+
+describe('phases that require a winning bid', () => {
+  // Regression: the timeline used to advance to "Ad Rendered" and
+  // "Verification Measured" even when every bid had been rejected, implying a
+  // creative was served and measured when no impression ever happened.
+
+  const NO_WINNER_CONFIGS: Array<[string, AuctionConfig]> = [
+    ['floor above every bid', { ...BASE_CONFIG, floorPrice: 10 }],
+    ['timeout below every bidder', { ...BASE_CONFIG, timeoutMs: 50 }],
+    ['consent withdrawn (only Amazon bids, below floor)', { ...BASE_CONFIG, gdprConsent: false, floorPrice: 2 }],
+    ['all bidders deactivated', { ...BASE_CONFIG, activeBidders: [] }],
+  ];
+
+  for (const [label, config] of NO_WINNER_CONFIGS) {
+    it(`omits AD_RENDERED and VERIFICATION_MEASURED when ${label}`, () => {
+      const phases = activePhasesFor(config);
+      expect(phases).not.toContain('AD_RENDERED');
+      expect(phases).not.toContain('VERIFICATION_MEASURED');
+      // The auction still ran and still arbitrated — it just served nothing.
+      expect(phases).toContain('GAM_ARBITRATION');
+      expect(phases[phases.length - 1]).toBe('GAM_ARBITRATION');
+    });
+
+    it(`never resolves to a render/verification phase when ${label}`, () => {
+      for (let ms = 0; ms <= AUCTION_DURATION_MS; ms += 5) {
+        const phase = phaseAtElapsed(config, ms);
+        expect(phase).not.toBe('AD_RENDERED');
+        expect(phase).not.toBe('VERIFICATION_MEASURED');
+      }
+    });
+  }
+
+  it('includes both phases when a bid does win', () => {
+    const phases = activePhasesFor(BASE_CONFIG);
+    expect(phases).toContain('AD_RENDERED');
+    expect(phases).toContain('VERIFICATION_MEASURED');
+  });
+
+  it('keeps AD_RENDERED even when IAS is disabled', () => {
+    const phases = activePhasesFor({ ...BASE_CONFIG, includeVerification: false });
+    expect(phases).toContain('AD_RENDERED');
+    expect(phases).not.toContain('VERIFICATION_MEASURED');
   });
 });
 

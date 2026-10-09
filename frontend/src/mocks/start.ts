@@ -22,7 +22,25 @@ export async function startMockNetwork(): Promise<void> {
     await worker.start({
       quiet: false,
       serviceWorker: { url: '/mockServiceWorker.js' },
-      onUnhandledRequest: 'error',
+      // `error` is what guarantees no live ad-tech traffic can escape — but it
+      // must not be applied to the app's own assets. A blanket rule fails the
+      // document request (GET /) and every Vite module, producing a red 500.
+      // Only requests that look like ad-tech traffic are escalated; everything
+      // else is bypassed so the app shell still loads.
+      onUnhandledRequest(request, print) {
+        const isAdTechCall =
+          request.url.includes('/openrtb2/') ||
+          request.url.includes('/api/consent/') ||
+          request.url.includes('/api/identity/') ||
+          request.url.includes('/api/audience/') ||
+          request.url.includes('/api/verification/');
+
+        if (isAdTechCall) {
+          print.error();
+        } else {
+          print.warning();
+        }
+      },
     });
     console.info('[adtech-flow] Mock network active — all ad-tech traffic is intercepted.');
   } catch (error) {

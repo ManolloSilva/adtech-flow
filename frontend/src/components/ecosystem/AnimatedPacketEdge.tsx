@@ -11,9 +11,9 @@
  * as an animatable style prop and warns on every frame.
  */
 
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { BaseEdge, getBezierPath, Position, type EdgeProps } from '@xyflow/react';
-import { motion } from 'framer-motion';
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion';
 
 import { ROLE_STYLES } from '@/lib/roleStyles';
 import type { Packet } from '@/types';
@@ -32,8 +32,6 @@ const PACKET_COLORS: Record<Packet['kind'], string> = {
 const PACKET_DURATION_S = 1.4;
 /** Delay between packets sharing the same edge. */
 const PACKET_STAGGER_S = 0.18;
-/** Keyframes sampled along the curve. */
-const PATH_SAMPLES = 24;
 
 /**
  * React Flow constrains `edgeTypes` to `Edge<Record<string, unknown>>`, so any
@@ -69,7 +67,16 @@ function cubicPoint(t: number, p0: Point, p1: Point, p2: Point, p3: Point): Poin
   };
 }
 
-/** A single glowing packet travelling source → target. */
+/**
+ * A single glowing packet travelling source → target.
+ *
+ * Note: `cx`/`cy` are SVG *attributes*, not CSS transform properties. Framer
+ * Motion only accepts keyframe arrays for CSS animatable properties, so passing
+ * `animate={{ cx: [...] }}` yields `cx="undefined"` and the browser rejects the
+ * whole element. Instead we drive a 0→1 `progress` motion value with `animate()`
+ * and derive `cx`/`cy` from it via `useTransform`, which is the supported path
+ * for animating SVG geometry.
+ */
 function PacketDot({
   color,
   delay,
@@ -79,26 +86,36 @@ function PacketDot({
   delay: number;
   controlPoints: [Point, Point, Point, Point];
 }) {
-  const samples = Array.from({ length: PATH_SAMPLES + 1 }, (_, i) =>
-    cubicPoint(i / PATH_SAMPLES, ...controlPoints),
+  const progress = useMotionValue(0);
+
+  useEffect(() => {
+    const controls = animate(progress, 1, {
+      duration: PACKET_DURATION_S,
+      delay,
+      ease: 'linear',
+      repeat: Infinity,
+      repeatDelay: PACKET_STAGGER_S,
+    });
+    return () => controls.stop();
+  }, [progress, delay]);
+
+  const cx = useTransform(progress, (t) => cubicPoint(t, ...controlPoints).x);
+  const cy = useTransform(progress, (t) => cubicPoint(t, ...controlPoints).y);
+  // Fade in at the start, fade out at the end so packets do not pop.
+  const opacity = useTransform(
+    progress,
+    (t) => Math.min(1, t / 0.12) * Math.min(1, (1 - t) / 0.12),
   );
 
   return (
     <motion.circle
       r={4}
       fill={color}
-      style={{ filter: `drop-shadow(0 0 6px ${color})` }}
-      animate={{
-        cx: samples.map((p) => p.x),
-        cy: samples.map((p) => p.y),
-        opacity: [0, 1, 1, 0],
-      }}
-      transition={{
-        duration: PACKET_DURATION_S,
-        ease: 'linear',
-        delay,
-        repeat: Infinity,
-        repeatDelay: 0.4,
+      style={{
+        cx,
+        cy,
+        opacity,
+        filter: `drop-shadow(0 0 6px ${color})`,
       }}
     />
   );

@@ -32,7 +32,9 @@ if (!globalThis.ResizeObserver) {
 
 /* ------------------------------------------------------------------------- */
 /* Network guard: MSW intercepts every request.                               */
-/* Any unhandled request fails loudly so a live call can never escape a test. */
+/* Any unhandled request fails loudly so a live call can never escape a test.  */
+/* Safe to use a blanket `error` here — unlike the browser, tests issue no       */
+/* navigation or asset requests, only explicit `fetch()` calls under test.      */
 /* ------------------------------------------------------------------------- */
 
 beforeAll(() => {

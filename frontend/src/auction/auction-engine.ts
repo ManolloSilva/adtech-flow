@@ -64,25 +64,43 @@ const CONDITIONAL_PHASES: Partial<Record<AuctionPhase, keyof AuctionConfig>> = {
   VERIFICATION_MEASURED: 'includeVerification',
 };
 
+/**
+ * Phases that only occur when an ad actually won the auction.
+ *
+ * Without this, a run where every bid was rejected would still advance to
+ * `AD_RENDERED` and `VERIFICATION_MEASURED` — claiming a creative rendered and
+ * was measured when no impression was ever served. That is both wrong and, in
+ * an educational tool, actively misleading.
+ */
+const REQUIRES_WINNING_BID: ReadonlySet<AuctionPhase> = new Set([
+  'AD_RENDERED',
+  'VERIFICATION_MEASURED',
+]);
+
 /** Returns the ordered phase list for a given configuration. */
 export function activePhasesFor(config: AuctionConfig): AuctionPhase[] {
+  const hasWinner = DEMAND_PARTNERS.some(
+    (partner) => evaluateBid(partner, config).status === 'submitted',
+  );
+
   return PHASE_SCHEDULE.filter(({ phase }) => {
     const flag = CONDITIONAL_PHASES[phase];
-    return flag ? Boolean(config[flag]) : true;
+    if (flag && !config[flag]) return false;
+    if (REQUIRES_WINNING_BID.has(phase) && !hasWinner) return false;
+    return true;
   }).map(({ phase }) => phase);
 }
 
 /** Maps a timeline position (ms) to the phase that is current at that instant. */
 export function phaseAtElapsed(config: AuctionConfig, elapsedMs: number): AuctionPhase {
-  const schedule = PHASE_SCHEDULE.filter(({ phase }) => {
-    const flag = CONDITIONAL_PHASES[phase];
-    return flag ? Boolean(config[flag]) : true;
-  });
+  // Derive the schedule from `activePhasesFor` so time and phase can never
+  // disagree about which phases exist.
+  const active = new Set(activePhasesFor(config));
 
   let current: AuctionPhase = 'IDLE';
-  for (const entry of schedule) {
-    if (elapsedMs >= entry.atMs) {
-      current = entry.phase;
+  for (const { phase, atMs } of PHASE_SCHEDULE) {
+    if (active.has(phase) && elapsedMs >= atMs) {
+      current = phase;
     }
   }
   return current;
