@@ -1,0 +1,155 @@
+name: CI Pipeline
+
+# Stage order mirrors docs/linting.md: fail fast on cheap checks first.
+#   1. Oxlint      (~15 ms, fail-fast)
+#   2. ESLint      (deep AST + hooks + accessibility rule)
+#   3. Vitest      (frontend unit/component + build-script unit tests)
+#   4. Typecheck & Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lint-fast:
+    name: ⚡ Stage 1 - Oxlint (Fail-Fast)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Oxlint
+        working-directory: frontend
+        run: npm run lint:fast
+
+  lint-deep:
+    name: 🔍 Stage 2 - ESLint (Deep Validation)
+    needs: lint-fast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint:deep
+
+  test:
+    name: 🧪 Stage 3 - Vitest
+    needs: lint-deep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install build-tooling dependencies
+        run: npm ci
+
+      - name: Frontend unit & component tests
+        working-directory: frontend
+        run: npm run test:run
+
+      - name: Build-script unit tests (sellers.json ETL)
+        run: npm test
+
+  build:
+    name: 📦 Stage 4 - Typecheck & Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build production bundle
+        working-directory: frontend
+        run: npm run build
+
+      - name: Verify the MSW service worker ships in the build
+        working-directory: frontend
+        run: test -f dist/mockServiceWorker.js
+
+  data-snapshot:
+    name: 🗺️ Ecosystem data snapshot (sellers.json ETL)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install build-tooling dependencies
+        run: npm ci
+
+      # The committed snapshot is the deterministic curated seed, not a live
+      # crawl: `sellers.json` contents change upstream, so a live fetch would make
+      # CI non-reproducible. This asserts the seed is intact and inside budget.
+      # Enrichment is an explicit manual `npm run etl` when the seed changes.
+      - name: Verify the ecosystem snapshot is reproducible and current
+        run: |
+          npm run etl:offline
+          if ! git diff --exit-code -- frontend/src/data/ecosystem-nodes.json; then
+            echo "::error::ecosystem-nodes.json is stale. Run 'npm run etl:offline' and commit the result."
+            exit 1
+          fi
+          SIZE=$(wc -c < frontend/src/data/ecosystem-nodes.json)
+          echo "ecosystem-nodes.json is ${SIZE} bytes (budget 409600)"

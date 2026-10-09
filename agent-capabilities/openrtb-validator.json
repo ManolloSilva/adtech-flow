@@ -1,0 +1,27 @@
+{
+  "name": "openrtb-validator",
+  "version": "1.0.0",
+  "description": "Validates OpenRTB 2.5 and 3.0 bid requests and responses against official IAB schemas using Zod.",
+  "inputs": {
+    "payload": {
+      "type": "object",
+      "description": "The OpenRTB JSON payload to validate"
+    },
+    "version": {
+      "type": "string",
+      "enum": ["2.5", "3.0"],
+      "default": "2.5"
+    }
+  },
+  "outputs": {
+    "valid": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

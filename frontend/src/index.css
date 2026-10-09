@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+/* React Flow's own stylesheet must be loaded for node positioning and edge
+   rendering. Without it edges silently fail to render. */
+@import '@xyflow/react/dist/style.css';
+
+/*
+ * Design tokens — see docs/design-system.md
+ * Tailwind v4 exposes design tokens via @theme so that shadcn/ui
+ * components and product components share a single source of truth.
+ */
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Consolas, 'Liberation Mono', monospace;
+
+  /* Ecosystem role palette (8 semantic categories) */
+  --color-role-publisher: oklch(0.769 0.188 70.08);
+  --color-role-cmp: oklch(0.712 0.193 306.71);
+  --color-role-audience: oklch(0.77 0.13 182.07);
+  --color-role-identity: oklch(0.797 0.145 211.88);
+  --color-role-ssp: oklch(0.623 0.214 259.81);
+  --color-role-dsp: oklch(0.769 0.188 70.08);
+  --color-role-adserver: oklch(0.585 0.233 277.12);
+  --color-role-verification: oklch(0.645 0.246 16.44);
+
+  /* Canvas surfaces */
+  --color-canvas: oklch(0.129 0.042 264.7);
+  --color-surface: oklch(0.208 0.042 265.75);
+}
+
+:root {
+  color-scheme: dark;
+
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.279 0.041 260.031);
+  --input: oklch(0.279 0.041 260.031);
+  --ring: oklch(0.623 0.214 259.815);
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Mandatory visible focus ring per docs/design-system.md §4 (WCAG 2.1 AA) */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}

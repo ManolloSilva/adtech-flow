@@ -1,0 +1,305 @@
+/**
+ * ecosystem-seed.ts — curated seed data for the sellers.json ETL.
+ *
+ * This is the source of truth for human-written copy, semantic `category`
+ * tags, and optional-vendor flags. `fetch-sellers.ts` merges live sellers.json
+ * discoveries *underneath* this list, so the curated descriptions always win.
+ *
+ * Data provenance: domains and seller types come from IAB Tech Lab-mandated
+ * public `sellers.json` files. All descriptions are written by hand.
+ * PII is never stored here.
+ */
+
+export type EntityCategory =
+  | 'publisher'
+  | 'cmp'
+  | 'audience'
+  | 'identity'
+  | 'ssp'
+  | 'dsp'
+  | 'adserver'
+  | 'verification';
+
+export type SellerType = 'PUBLISHER' | 'INTERMEDIARY' | 'BOTH';
+
+export interface EcosystemNode {
+  id: string;
+  name: string;
+  category: EntityCategory;
+  domain: string;
+  sellerType: SellerType;
+  description: string;
+  isOptional?: boolean;
+}
+
+export const CURATED_ECOSYSTEM_NODES: ReadonlyArray<EcosystemNode> = [
+  /* ----------------------------- Publishers ----------------------------- */
+  {
+    id: 'node-pub-nytimes',
+    name: 'The New York Times',
+    category: 'publisher',
+    domain: 'nytimes.com',
+    sellerType: 'PUBLISHER',
+    description:
+      'Premium news publisher executing a client-side Prebid.js wrapper. Holds the first-party audience data and owns the page, the CMP implementation, and the ad server tag.',
+  },
+  {
+    id: 'node-pub-cnn',
+    name: 'CNN',
+    category: 'publisher',
+    domain: 'cnn.com',
+    sellerType: 'PUBLISHER',
+    description:
+      'Global news publisher participating in header bidding with multiple SSP bidders and a server-side ad server integration.',
+  },
+  {
+    id: 'node-pub-guardian',
+    name: 'The Guardian',
+    category: 'publisher',
+    domain: 'theguardian.com',
+    sellerType: 'PUBLISHER',
+    description:
+      'UK news publisher operating under GDPR with a strict TCF v2.2 consent flow and a transparency-first seller declaration.',
+  },
+
+  /* -------------------------------- CMPs --------------------------------- */
+  {
+    id: 'node-cmp-onetrust',
+    name: 'OneTrust',
+    category: 'cmp',
+    domain: 'onetrust.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Consent Management Platform generating IAB TCF v2.2 consent strings and Google Consent Mode v2 signals. Resolves the consent state before any bid request is assembled.',
+  },
+  {
+    id: 'node-cmp-cookiebot',
+    name: 'Usercentrics Cookiebot',
+    category: 'cmp',
+    domain: 'cookiebot.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'CMP that scans vendor lists and returns per-vendor consent, allowing bidders to be selectively excluded rather than blocking the whole auction.',
+  },
+  {
+    id: 'node-cmp-quantcast',
+    name: 'Quantcast Choice',
+    category: 'cmp',
+    domain: 'quantcast.mgr.consensu.org',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Privacy-preserving consent platform distributing real-time audience segments and consent signals to downstream measurement partners.',
+  },
+
+  /* ------------------------ Audience / SDA (optional) -------------------- */
+  {
+    id: 'node-audience-permutive',
+    name: 'Permutive',
+    category: 'audience',
+    domain: 'permutive.com',
+    sellerType: 'INTERMEDIARY',
+    isOptional: true,
+    description:
+      'Privacy-safe audience platform generating on-device first-party cohorts and Seller-Defined Audiences (SDA), injected into `ortb2.user.data` without exposing raw user data to the seller.',
+  },
+
+  /* ------------------------ Identity providers (optional) ---------------- */
+  {
+    id: 'node-id-liveramp',
+    name: 'LiveRamp RampID',
+    category: 'identity',
+    domain: 'liveramp.com',
+    sellerType: 'INTERMEDIARY',
+    isOptional: true,
+    description:
+      'Identity resolution provider mapping first-party IDs to the pseudonymous RampID envelope, enabling frequency capping and audience matching across exchanges.',
+  },
+  {
+    id: 'node-id-sharedid',
+    name: 'Prebid SharedID',
+    category: 'identity',
+    domain: 'prebid.org',
+    sellerType: 'INTERMEDIARY',
+    isOptional: true,
+    description:
+      'Open-source first-party ID module. Stores an EUID in a first-party cookie and sends it as a user ID module bid parameter, improving DSP-side match rates without a third-party cookie.',
+  },
+
+  /* -------------------------------- SSPs --------------------------------- */
+  {
+    id: 'node-ssp-magnite',
+    name: 'Magnite',
+    category: 'ssp',
+    domain: 'rubiconproject.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Supply-Side Platform running the header bidding auction and the exchange. Applies price floors, enforces deal precedence, and returns the winning bid to the ad server.',
+  },
+  {
+    id: 'node-ssp-pubmatic',
+    name: 'PubMatic',
+    category: 'ssp',
+    domain: 'pubmatic.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Supply-Side Platform with a header bidding wrapper and first-party data segment marketplace. Publishes one of the most widely adopted sellers.json files.',
+  },
+  {
+    id: 'node-ssp-openx',
+    name: 'OpenX',
+    category: 'ssp',
+    domain: 'openx.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Supply-Side Platform specialising in curated private marketplace deals, header bidding passthrough, and supply-path transparency via the `schain` object.',
+  },
+  {
+    id: 'node-ssp-index',
+    name: 'Index Exchange',
+    category: 'ssp',
+    domain: 'indexexchange.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Supply-Side Platform known for its independent exchange design and strong publisher-side yield tooling.',
+  },
+  {
+    id: 'node-ssp-adform',
+    name: 'Adform',
+    category: 'ssp',
+    domain: 'adform.net',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Supply-Side Platform offering DSP-to-SSP direct deals (Deals), creative scanning, and supply-path validation.',
+  },
+  {
+    id: 'node-ssp-smartadserver',
+    name: 'Smart AdServer',
+    category: 'ssp',
+    domain: 'smartadserver.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Supply-Side Platform with a strong European footprint and built-in video marketplace integrations.',
+  },
+  {
+    id: 'node-ssp-moneytizer',
+    name: 'The Moneytizer',
+    category: 'ssp',
+    domain: 'themoneytizer.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Content-monetisation SSP pairing contextual classification with brand-safety filters before the auction runs.',
+  },
+  {
+    id: 'node-ssp-adman',
+    name: 'Adman Media',
+    category: 'ssp',
+    domain: 'admanmedia.com',
+    sellerType: 'INTERMEDIARY',
+    description: 'Independent SSP operating curated PMP deals and direct premium inventory partnerships.',
+  },
+  {
+    id: 'node-ssp-yieldmo',
+    name: 'Yieldmo',
+    category: 'ssp',
+    domain: 'yieldmo.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Independent SSP running the Yieldmo Direct marketplace for one-to-one premium brand inventory.',
+  },
+
+  /* -------------------------------- DSPs --------------------------------- */
+  {
+    id: 'node-dsp-ttd',
+    name: 'The Trade Desk',
+    category: 'dsp',
+    domain: 'ttd.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Demand-Side Platform buying across the open internet. Evaluates each impression in a few milliseconds and returns a CPM bid, optionally restricted to PMP deal IDs.',
+  },
+  {
+    id: 'node-dsp-dv360',
+    name: 'Google DV360',
+    category: 'dsp',
+    domain: 'doubleclick.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Google’s enterprise DSP. Participates in the auction through the OpenRTB endpoint and competes with Google Ad Manager for the same impression.',
+  },
+  {
+    id: 'node-dsp-amazon',
+    name: 'Amazon DSP',
+    category: 'dsp',
+    domain: 'amazon.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Retail-media DSP bidding on commerce intent signals. Typically bids conservatively on general news inventory.',
+  },
+  {
+    id: 'node-dsp-criteo',
+    name: 'Criteo',
+    category: 'dsp',
+    domain: 'criteo.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Retargeting and commerce-focused DSP with a large CTV and e-commerce footprint, using first-party basket signals for bid valuation.',
+  },
+  {
+    id: 'node-dsp-casale',
+    name: 'Casale Media',
+    category: 'dsp',
+    domain: 'casalemedia.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Premium brand-safety DSP focused on contextual and private inventory, commonly invoked in PMP-only auctions.',
+  },
+  {
+    id: 'node-dsp-sharethrough',
+    name: 'Sharethrough',
+    category: 'dsp',
+    domain: 'sharethrough.com',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Contextual, standard-supply DSP requiring a publisher-registered domain or seller declaration before bidding.',
+  },
+  {
+    id: 'node-dsp-smaato',
+    name: 'Smaato',
+    category: 'dsp',
+    domain: 'smaato.net',
+    sellerType: 'INTERMEDIARY',
+    description: 'Mobile-first DSP with supply-path optimisation across app and mobile-web environments.',
+  },
+
+  /* ----------------------------- Ad servers ------------------------------ */
+  {
+    id: 'node-adserver-gam',
+    name: 'Google Ad Manager',
+    category: 'adserver',
+    domain: 'doubleclick.net',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Ad server arbitrating between a direct-sold line item and the winning header bidding bid, passed via key-values such as `hb_pb`. Direct campaigns have configured priority.',
+  },
+  {
+    id: 'node-adserver-mock',
+    name: 'Mock Ad Server',
+    category: 'adserver',
+    domain: 'ad-server.example',
+    sellerType: 'INTERMEDIARY',
+    description:
+      'Synthetic ad server used in this simulator to demonstrate arbitration without involving any real campaign delivery.',
+  },
+
+  /* ------------------------- Verification (optional) --------------------- */
+  {
+    id: 'node-verification-ias',
+    name: 'Integral Ad Science',
+    category: 'verification',
+    domain: 'adsafeprotected.com',
+    sellerType: 'INTERMEDIARY',
+    isOptional: true,
+    description:
+      'Post-bid measurement and verification tag. Executes after the ad renders to measure viewability (MRC/OMID), classify brand safety, and estimate invalid traffic (IVT).',
+  },
+];

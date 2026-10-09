@@ -1,0 +1,11 @@
+{
+  "name": "adtech-flow-backend",
+  "version": "1.0.0",
+  "description": "Optional standalone mock server for OpenRTB auction diagnostics",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {}
+}

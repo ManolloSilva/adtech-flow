@@ -1,0 +1,19 @@
+{
+  "name": "adtech-flow",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Build-time tooling for AdTech Flow (sellers.json ETL). The app itself lives in frontend/.",
+  "type": "module",
+  "scripts": {
+    "etl": "tsx scripts/fetch-sellers.ts",
+    "etl:offline": "tsx scripts/fetch-sellers.ts --offline",
+    "test": "vitest run --config scripts/vitest.config.ts",
+    "test:watch": "vitest --config scripts/vitest.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "tsx": "^4.19.1",
+    "typescript": "~5.6.2",
+    "vitest": "^2.1.9"
+  }
+}

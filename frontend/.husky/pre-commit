@@ -1,0 +1,12 @@
+#!/bin/sh
+# AdTech Flow pre-commit hook
+#
+# Stage 1 (fail-fast): Oxlint on staged files (~15ms, written in Rust).
+# Stage 2 (deep):      ESLint on the same staged files.
+#
+# Git invokes hooks with the repository root as cwd (core.hooksPath = frontend/.husky),
+# so we explicitly move into frontend/ where node_modules and the lint-staged config live.
+cd "$(dirname "$0")/.." || exit 1
+
+echo "⚡ lint-staged: running Oxlint + ESLint on staged files..."
+npx --no-install lint-staged

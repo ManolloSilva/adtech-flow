@@ -1,0 +1,215 @@
+openapi: 3.0.3
+info:
+  title: AdTech Flow Simulator API
+  description: >
+    API specification for AdTech Flow's local simulation engine,
+    synthetic OpenRTB 2.5/3.0 endpoints, and ecosystem catalog services.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5173/api
+    description: Local MSW (Mock Service Worker) Interceptor Base URL
+  - url: http://localhost:8080/api
+    description: Standalone Simulation Backend (Docker / Node)
+
+paths:
+  /auction/simulate:
+    post:
+      summary: Trigger a synthetic header bidding auction
+      description: Simulates an OpenRTB auction with configurable demand partners, floors, and timeouts.
+      operationId: simulateAuction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuctionSimulationConfig'
+      responses:
+        '200':
+          description: Auction simulation outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionSimulationResult'
+        '400':
+          description: Invalid auction configuration
+
+  /openrtb25/bid:
+    post:
+      summary: Mock OpenRTB 2.5 Bid Endpoint
+      description: Endpoint intercepted by MSW representing an SSP/DSP bid request.
+      operationId: openRtbBid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenRtbBidRequest'
+      responses:
+        '200':
+          description: OpenRTB 2.5 Bid Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenRtbBidResponse'
+
+  /ecosystem/nodes:
+    get:
+      summary: Retrieve ecosystem graph nodes
+      description: Returns the curated snapshot of adtech participants derived from sellers.json.
+      operationId: getEcosystemNodes
+      responses:
+        '200':
+          description: List of ecosystem nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EcosystemNode'
+
+components:
+  schemas:
+    AuctionSimulationConfig:
+      type: object
+      properties:
+        floorPrice:
+          type: number
+          format: float
+          example: 1.50
+        timeoutMs:
+          type: integer
+          example: 250
+        gdprConsent:
+          type: boolean
+          example: true
+        activeBidders:
+          type: array
+          items:
+            type: string
+          example: ["thetradedesk", "magnite", "openx"]
+        pmpDealId:
+          type: string
+          nullable: true
+          example: "DEAL-TTD-001"
+
+    AuctionSimulationResult:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          example: "auc-98472-a1"
+        winningBidder:
+          type: string
+          example: "thetradedesk"
+        winningCpm:
+          type: number
+          format: float
+          example: 3.20
+        currency:
+          type: string
+          example: "USD"
+        latencyMs:
+          type: integer
+          example: 184
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              timestampMs:
+                type: integer
+              event:
+                type: string
+              details:
+                type: object
+
+    OpenRtbBidRequest:
+      type: object
+      required:
+        - id
+        - imp
+      properties:
+        id:
+          type: string
+          example: "req-123456"
+        imp:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              bidfloor:
+                type: number
+              banner:
+                type: object
+                properties:
+                  w:
+                    type: integer
+                  h:
+                    type: integer
+        site:
+          type: object
+          properties:
+            domain:
+              type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+
+    OpenRtbBidResponse:
+      type: object
+      required:
+        - id
+        - seatbid
+      properties:
+        id:
+          type: string
+        seatbid:
+          type: array
+          items:
+            type: object
+            properties:
+              bid:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    impid:
+                      type: string
+                    price:
+                      type: number
+                    adm:
+                      type: string
+                    crid:
+                      type: string
+
+    EcosystemNode:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - domain
+      properties:
+        id:
+          type: string
+          example: "node-magnite"
+        name:
+          type: string
+          example: "Magnite"
+        category:
+          type: string
+          enum: [publisher, cmp, adserver, ssp, dsp, identity]
+          example: "ssp"
+        domain:
+          type: string
+          example: "magnite.com"
+        sellerType:
+          type: string
+          enum: [PUBLISHER, INTERMEDIARY, BOTH]
+          example: "INTERMEDIARY"
