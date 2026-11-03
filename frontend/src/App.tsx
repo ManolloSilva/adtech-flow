@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { Layers, Network } from 'lucide-react';
 
 import { AuctionConfigPanel } from '@/components/auction/AuctionConfigPanel';
 import { BidWaterfall } from '@/components/auction/BidWaterfall';
@@ -26,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ecosystemNodesRaw from '@/data/ecosystem-nodes.json';
 import { humanizePhase } from '@/lib/roleStyles';
+import { cn } from '@/lib/utils';
 import { AUCTION_DURATION_MS, useAuctionStore } from '@/store/auctionStore';
 import type { EcosystemNodeData } from '@/types';
 
@@ -66,6 +68,8 @@ export default function App() {
     selectedNodeId,
     visibleCategories,
     isInspectorOpen,
+    canvasViewMode,
+    activeVendorByCategory,
     play,
     pause,
     stepTo,
@@ -77,6 +81,8 @@ export default function App() {
     setSelectedNodeId,
     setInspectorOpen,
     toggleCategory,
+    setCanvasViewMode,
+    setActiveVendorForCategory,
   } = useAuctionStore();
 
   const selectedNode = useMemo(
@@ -148,9 +154,49 @@ export default function App() {
                     <code className="font-mono">sellers.json</code>
                   </p>
                 </div>
-                <Badge variant="outline" className="border-slate-700 bg-slate-800 font-mono text-[10px] text-slate-400">
-                  {elapsedMs.toFixed(0)}ms / {AUCTION_DURATION_MS}ms
-                </Badge>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div
+                    className="flex items-center rounded-lg border border-slate-800 bg-slate-900/90 p-0.5 text-xs"
+                    role="group"
+                    aria-label="Canvas topology view mode"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setCanvasViewMode('stage')}
+                      data-testid="view-mode-stage"
+                      aria-pressed={canvasViewMode === 'stage'}
+                      className={cn(
+                        'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all',
+                        canvasViewMode === 'stage'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-slate-200',
+                      )}
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      <span>Stage Dropdowns</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCanvasViewMode('mesh')}
+                      data-testid="view-mode-mesh"
+                      aria-pressed={canvasViewMode === 'mesh'}
+                      className={cn(
+                        'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all',
+                        canvasViewMode === 'mesh'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-slate-200',
+                      )}
+                    >
+                      <Network className="h-3.5 w-3.5" />
+                      <span>Full Mesh ({ecosystemNodes.length})</span>
+                    </button>
+                  </div>
+
+                  <Badge variant="outline" className="border-slate-700 bg-slate-800 font-mono text-[10px] text-slate-400">
+                    {elapsedMs.toFixed(0)}ms / {AUCTION_DURATION_MS}ms
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
 
@@ -164,15 +210,20 @@ export default function App() {
                 nodes={ecosystemNodes}
                 config={config}
                 bids={bids}
+                winningBid={winningBid}
                 packets={packets}
                 visibleCategories={visibleCategories}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={setSelectedNodeId}
+                viewMode={canvasViewMode}
+                activeVendorByCategory={activeVendorByCategory}
+                onSelectVendorForCategory={setActiveVendorForCategory}
                 className="h-[420px] lg:h-[560px]"
               />
               <p className="text-[11px] text-slate-500">
-                Click any node to inspect it. Tab moves between node cards; Enter or Space opens the
-                detail panel.
+                {canvasViewMode === 'stage'
+                  ? 'Stage view: click any stage dropdown to switch entities (DSP, SSP, Publisher) or Details to inspect.'
+                  : 'Click any node to inspect it. Tab moves between node cards; Enter or Space opens the detail panel.'}
               </p>
             </CardContent>
           </Card>

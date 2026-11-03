@@ -27,10 +27,23 @@ import type {
   AuctionConfig,
   AuctionPhase,
   BidderResult,
+  CanvasViewMode,
+  EntityCategory,
   Packet,
   PlaybackStatus,
   VerificationReport,
 } from '@/types';
+
+export const DEFAULT_ACTIVE_VENDORS: Record<EntityCategory, string> = {
+  publisher: 'node-pub-nytimes',
+  cmp: 'node-cmp-onetrust',
+  audience: 'node-audience-permutive',
+  identity: 'node-id-liveramp',
+  ssp: 'node-ssp-magnite',
+  dsp: 'node-dsp-ttd',
+  adserver: 'node-adserver-gam',
+  verification: 'node-verification-ias',
+};
 
 const ALL_BIDDER_IDS = DEMAND_PARTNERS.map((p) => p.bidderId);
 
@@ -82,6 +95,8 @@ export interface AuctionState {
   selectedNodeId: string | null;
   visibleCategories: Record<string, boolean>;
   isInspectorOpen: boolean;
+  canvasViewMode: CanvasViewMode;
+  activeVendorByCategory: Record<EntityCategory, string>;
 
   /* ------------------------------- Actions ------------------------------ */
   play: () => void;
@@ -95,6 +110,8 @@ export interface AuctionState {
   setSelectedNodeId: (id: string | null) => void;
   setInspectorOpen: (open: boolean) => void;
   toggleCategory: (category: string) => void;
+  setCanvasViewMode: (mode: CanvasViewMode) => void;
+  setActiveVendorForCategory: (category: EntityCategory, vendorId: string) => void;
 }
 
 /** Recomputes everything that depends on `config`, at a given elapsed time. */
@@ -204,6 +221,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => {
     selectedNodeId: null,
     visibleCategories: { ...DEFAULT_CATEGORY_VISIBILITY },
     isInspectorOpen: false,
+    canvasViewMode: 'stage',
+    activeVendorByCategory: { ...DEFAULT_ACTIVE_VENDORS },
 
     play: () => {
       const { elapsedMs, config, playback } = get();
@@ -262,6 +281,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => {
         selectedNodeId: null,
         isInspectorOpen: false,
         visibleCategories: { ...DEFAULT_CATEGORY_VISIBILITY },
+        canvasViewMode: 'stage',
+        activeVendorByCategory: { ...DEFAULT_ACTIVE_VENDORS },
       });
     },
 
@@ -309,6 +330,17 @@ export const useAuctionStore = create<AuctionState>((set, get) => {
       const { visibleCategories } = get();
       set({
         visibleCategories: { ...visibleCategories, [category]: !visibleCategories[category] },
+      });
+    },
+
+    setCanvasViewMode: (mode) => set({ canvasViewMode: mode }),
+
+    setActiveVendorForCategory: (category, vendorId) => {
+      const { activeVendorByCategory } = get();
+      set({
+        activeVendorByCategory: { ...activeVendorByCategory, [category]: vendorId },
+        selectedNodeId: vendorId,
+        isInspectorOpen: true,
       });
     },
   };

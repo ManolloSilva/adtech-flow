@@ -161,6 +161,7 @@ async function withDetailSheet(
 beforeEach(() => {
   actOnStore((s) => s.updateConfig({ ...DEFAULT_CONFIG }));
   actOnStore((s) => s.reset());
+  actOnStore((s) => s.setCanvasViewMode('mesh'));
 });
 
 describe('application shell', () => {
@@ -569,5 +570,77 @@ describe('demand partner waterfall', () => {
 
     await user.click(screen.getByTestId('bidder-toggle-node-dsp-ttd'));
     expect(store().config.activeBidders).not.toContain('node-dsp-ttd');
+  });
+});
+
+describe('M-06 — Category Stage Hubs with Dropdown Selectors', () => {
+  beforeEach(() => {
+    actOnStore((s) => s.setCanvasViewMode('stage'));
+  });
+
+  it('renders all 8 category stage cards on the canvas', () => {
+    render(<App />);
+    const expectedStages = [
+      'publisher',
+      'cmp',
+      'audience',
+      'identity',
+      'ssp',
+      'dsp',
+      'adserver',
+      'verification',
+    ];
+    for (const category of expectedStages) {
+      expect(
+        screen.getByTestId(`category-stage-card-${category}`),
+        `missing stage card for ${category}`,
+      ).toBeInTheDocument();
+    }
+  });
+
+  it('renders embedded dropdown buttons for category stages', () => {
+    render(<App />);
+    for (const category of ['publisher', 'cmp', 'ssp', 'dsp', 'adserver']) {
+      expect(screen.getByTestId(`category-stage-dropdown-${category}`)).toBeInTheDocument();
+    }
+  });
+
+  it('opens the dropdown and displays member companies when clicked', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const dspDropdown = screen.getByTestId('category-stage-dropdown-dsp');
+    await user.click(dspDropdown);
+
+    expect(screen.getByRole('listbox', { name: /dsp vendor list/i })).toBeInTheDocument();
+    expect(screen.getByTestId('category-stage-option-node-dsp-ttd')).toBeInTheDocument();
+    expect(screen.getByTestId('category-stage-option-node-dsp-dv360')).toBeInTheDocument();
+    expect(screen.getByTestId('category-stage-option-node-dsp-amazon')).toBeInTheDocument();
+  });
+
+  it('switches the active vendor from the dropdown', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const dspDropdown = screen.getByTestId('category-stage-dropdown-dsp');
+    await user.click(dspDropdown);
+    await user.click(screen.getByTestId('category-stage-option-node-dsp-dv360'));
+
+    expect(store().activeVendorByCategory.dsp).toBe('node-dsp-dv360');
+  });
+
+  it('toggles between Stage Dropdowns view and Full Mesh view seamlessly', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getByTestId('category-stage-card-dsp')).toBeInTheDocument();
+    expect(screen.queryByTestId('ecosystem-node-node-dsp-ttd')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('view-mode-mesh'));
+    expect(screen.getByTestId('ecosystem-node-node-dsp-ttd')).toBeInTheDocument();
+    expect(screen.queryByTestId('category-stage-card-dsp')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('view-mode-stage'));
+    expect(screen.getByTestId('category-stage-card-dsp')).toBeInTheDocument();
   });
 });

@@ -112,3 +112,5 @@ export interface AuctionConfig {
 }
 
 export type PlaybackStatus = 'idle' | 'playing' | 'paused' | 'completed';
+
+export type CanvasViewMode = 'stage' | 'mesh';

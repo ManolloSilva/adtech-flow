@@ -127,3 +127,41 @@ export const ECOSYSTEM_EDGES: ReadonlyArray<{ id: string; source: string; target
   { id: 'e-gam-pub', source: 'node-adserver-gam', target: 'node-pub-nytimes', label: 'render' },
   { id: 'e-ias-pub', source: 'node-verification-ias', target: 'node-pub-nytimes', label: 'measure' },
 ];
+
+/** Canonical stage node ID for each category. */
+export const STAGE_ID_BY_CATEGORY: Record<string, string> = {
+  publisher: 'stage-publisher',
+  cmp: 'stage-cmp',
+  audience: 'stage-audience',
+  identity: 'stage-identity',
+  ssp: 'stage-ssp',
+  dsp: 'stage-dsp',
+  adserver: 'stage-adserver',
+  verification: 'stage-verification',
+};
+
+/** Deterministic canvas coordinates for the 8 stage hub nodes (Option 1). */
+export const STAGE_POSITIONS: Record<string, { x: number; y: number }> = {
+  publisher: { x: 0, y: 180 },
+  cmp: { x: 300, y: 40 },
+  audience: { x: 300, y: 180 },
+  identity: { x: 300, y: 320 },
+  ssp: { x: 620, y: 180 },
+  dsp: { x: 940, y: 180 },
+  adserver: { x: 1240, y: 100 },
+  verification: { x: 1240, y: 260 },
+};
+
+/** Clean supply-chain edges connecting the macro stage hubs. */
+export const STAGE_EDGES: ReadonlyArray<{ id: string; source: string; target: string; label: string }> = [
+  { id: 'se-pub-cmp', source: 'stage-publisher', target: 'stage-cmp', label: 'consent' },
+  { id: 'se-cmp-pub', source: 'stage-cmp', target: 'stage-publisher', label: 'TCF 2.2' },
+  { id: 'se-pub-aud', source: 'stage-publisher', target: 'stage-audience', label: 'cohorts / SDA' },
+  { id: 'se-pub-id', source: 'stage-publisher', target: 'stage-identity', label: 'envelope ID' },
+  { id: 'se-pub-ssp', source: 'stage-publisher', target: 'stage-ssp', label: 'Prebid.js' },
+  { id: 'se-ssp-dsp', source: 'stage-ssp', target: 'stage-dsp', label: 'bid request' },
+  { id: 'se-dsp-ssp', source: 'stage-dsp', target: 'stage-ssp', label: 'bid response' },
+  { id: 'se-ssp-adserver', source: 'stage-ssp', target: 'stage-adserver', label: 'hb_pb' },
+  { id: 'se-adserver-pub', source: 'stage-adserver', target: 'stage-publisher', label: 'render ad' },
+  { id: 'se-verification-pub', source: 'stage-verification', target: 'stage-publisher', label: 'measure' },
+];

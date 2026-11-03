@@ -37,6 +37,7 @@ Status labels: `📋 needs-grooming` | `✅ agent-ready` | `🔨 in-progress` | 
 | M-03 | Implement node category colour coding (DSP/SSP/CMP/Identity/AdServer/Publisher) | P0 | ✔️ | Single source of truth in `lib/roleStyles.ts` |
 | M-04 | Click node to open detail panel (role, seller type, domain, known integrations) | P0 | ✔️ | `NodeDetailSheet.tsx` — also surfaces the entity's live auction activity |
 | M-05 | Category filter bar (toggle visibility by node type) | P1 | ✔️ | `CategoryFilterBar.tsx`; visual-only, never alters the auction outcome |
+| M-06 | Category Stage Hubs with embedded dropdown buttons | P1 | ✔️ | `CategoryStageCard.tsx`; dropdown lists for DSP, Publishers, SSP, Ad Server, DMP, Identity (Option 1) |
 
 ### AUCTION SIMULATOR — ALPHA SLICE (F-02)
 
