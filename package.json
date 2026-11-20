@@ -5,10 +5,15 @@
   "description": "Build-time tooling for AdTech Flow (sellers.json ETL). The app itself lives in frontend/.",
   "type": "module",
   "scripts": {
+    "dev": "docker compose up --build",
     "etl": "tsx scripts/fetch-sellers.ts",
     "etl:offline": "tsx scripts/fetch-sellers.ts --offline",
-    "test": "vitest run --config scripts/vitest.config.ts",
-    "test:watch": "vitest --config scripts/vitest.config.ts"
+    "test": "npm run test:scripts && npm run test:backend && npm run test:frontend",
+    "test:scripts": "vitest run --config scripts/vitest.config.ts",
+    "test:backend": "npm --prefix backend test",
+    "test:frontend": "npm --prefix frontend run test:run",
+    "test:watch": "vitest --config scripts/vitest.config.ts",
+    "security:scan": "tsx scripts/security-scan.ts"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

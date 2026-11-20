@@ -46,7 +46,7 @@ export const UserDataEntrySchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
   segment: z.array(z.string()),
-  ext: z.record(z.unknown()).optional(),
+  ext: z.record(z.string(), z.unknown()).optional(),
   consent: z.string().optional(),
   /** Seller-Defined Audience signal (Permutive → ortb2.user.data) */
   provider: z.string().optional(),
@@ -57,7 +57,7 @@ export const ImpExtPrebidSchema = z.object({
     z.string(),
     z.object({
       adapter: z.string().optional(),
-      targeting: z.record(z.string()).optional(),
+      targeting: z.record(z.string(), z.string()).optional(),
     }),
   ),
   ortb2: z
@@ -65,7 +65,7 @@ export const ImpExtPrebidSchema = z.object({
       imp: z.array(z.unknown()).optional(),
       site: z.object({ content: z.unknown() }).passthrough().optional(),
       user: z.object({ data: z.array(UserDataEntrySchema) }).passthrough().optional(),
-      regs: z.object({ ext: z.record(z.unknown()).optional() }).passthrough().optional(),
+      regs: z.object({ ext: z.record(z.string(), z.unknown()).optional() }).passthrough().optional(),
       pmp: z.object({ private_auction: z.number().optional(), deals: z.array(z.unknown()) }).passthrough().optional(),
       fsk: z.string().optional(),
       gpid: z.string().optional(),
@@ -85,9 +85,9 @@ export const ImpExtPrebidSchema = z.object({
       gpp: z.string().optional(),
     })
     .optional(),
-  targeting: z.record(z.string()).optional(),
-  data: z.record(z.string()).optional(),
-  skadn: z.record(z.unknown()).optional(),
+  targeting: z.record(z.string(), z.string()).optional(),
+  data: z.record(z.string(), z.string()).optional(),
+  skadn: z.record(z.string(), z.unknown()).optional(),
   schain: SupplyChainSchema.optional(),
 });
 
@@ -121,12 +121,12 @@ export const UserDataSchema = z.object({
   name: z.string().optional(),
   buyeruid: z.string().optional(),
   data: z.array(UserDataEntrySchema).optional(),
-  ext: z.record(z.unknown()).optional(),
+  ext: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const RegsSchema = z.object({
   coppa: z.number().int().min(0).max(1).optional(),
-  ext: z.record(z.unknown()).optional(),
+  ext: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const PmpDealSchema = z.object({
@@ -136,7 +136,7 @@ export const PmpDealSchema = z.object({
   wseat: z.array(z.string()).optional(),
   wlang: z.array(z.string()).optional(),
   at: z.number().int().min(0).optional(),
-  ext: z.record(z.unknown()).optional(),
+  ext: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const PmpSchema = z.object({
@@ -148,7 +148,7 @@ export const BidRequestExtSchema = z.object({
   schain: SupplyChainSchema.optional(),
   gpp: z.string().optional(),
   gpp_sid: z.array(z.string()).optional(),
-  prebid: z.record(z.unknown()).optional(),
+  prebid: z.record(z.string(), z.unknown()).optional(),
 });
 
 /** OpenRTB 2.5 BidRequest */
@@ -157,7 +157,7 @@ export const BidRequestSchema = z.object({
   imp: z.array(ImpSchema).min(1, 'at least one impression is required'),
   site: SiteSchema.optional(),
   user: UserDataSchema.optional(),
-  device: z.record(z.unknown()).optional(),
+  device: z.record(z.string(), z.unknown()).optional(),
   tmax: z.number().int().min(0).optional(),
   regs: RegsSchema.optional(),
   bcat: z.array(z.string()).optional(),
@@ -179,7 +179,7 @@ export const BidSchemaInner = z.object({
   cid: z.string().optional(),
   dealid: z.string().optional(),
   mtype: z.number().int().min(1).max(4).optional(),
-  ext: z.record(z.unknown()).optional(),
+  ext: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const SeatBidSchema = z.object({
@@ -194,7 +194,7 @@ export const BidResponseSchema = z.object({
   seatbid: z.array(SeatBidSchema).optional(),
   bidid: z.string().optional(),
   cur: z.string().length(3).optional(),
-  ext: z.record(z.unknown()).optional(),
+  ext: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type BidRequest = z.infer<typeof BidRequestSchema>;

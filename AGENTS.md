@@ -15,6 +15,7 @@ The structure is inspired by [AI Shipping Labs](https://github.com/AI-Shipping-L
 | **Tester** | Reviews uncommitted work against acceptance criteria. Approves before commit | After the software engineer signals completion |
 | **On-Call Engineer** | Investigates CI failures, runtime errors, and unexpected behaviour | When CI fails or a runtime error is reported |
 | **Designer** | Owns visual design, UI consistency, component decisions, and accessibility | When a feature touches the UI canvas, node cards, or inspector panels |
+| **Security Engineer** | Scans containers and dependencies for CVEs; audits Dockerfiles and code for vulnerabilities | When a vulnerability is reported or before release |
 
 The orchestrator (main AI session) launches agents, assigns tasks, enforces the process, and only commits after the final acceptance step.
 

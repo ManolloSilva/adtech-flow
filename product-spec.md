@@ -33,8 +33,7 @@ AdTech Flow is an **open-source, interactive, in-browser simulator** that makes 
 - SupplyChain Object (`schain`) transparency
 - `sellers.json` ecosystem mapping (curated snapshot)
 - First-party audience platform & Seller-Defined Audiences (Permutive)
-- Post-bid digital ad verification & measurement tag (Integral Ad Science / IAS)
-- Optional vendor toggles (users can include/exclude Permutive, IAS, or Identity modules)
+- Optional vendor toggles (users can include/exclude Permutive, Identity, or other ecosystem modules)
 - `buyer.js` (`generateBid`) and `seller.js` (`scoreAd`) simulation
 
 ### Out of Scope

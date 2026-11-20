@@ -85,17 +85,40 @@ All agent definitions are in [AGENTS.md](./AGENTS.md) and are written to be **ag
 
 ## Getting Started
 
+### Run the full system (single command)
+
 ```bash
 # Clone the repository
 git clone https://github.com/<your-username>/adtech-flow.git
-cd adtech-flow/frontend
+cd adtech-flow
 
-# Install dependencies
+# Run frontend + backend + database
+npm run dev
+# Open http://localhost:5173
+```
+
+### Frontend only
+
+```bash
+cd frontend
 npm install
-
-# Run the development server
 npm run dev
 ```
+
+### Tests
+
+```bash
+# All tests (scripts + backend + frontend)
+npm test
+
+# Frontend only
+cd frontend && npm run test:run
+```
+
+### Deployment
+
+The frontend is deployed to GitHub Pages via `.github/workflows/deploy.yml`.
+Production URL: https://<your-username>.github.io/adtech-flow/
 
 ## Roadmap
 

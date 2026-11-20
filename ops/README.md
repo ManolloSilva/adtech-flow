@@ -9,11 +9,14 @@ This directory documents deployment, containerization, and local development ope
 You can run the full environment with Docker Compose:
 
 ```bash
-# Build and run containers
-docker-compose up --build
+# Build and run the full system (frontend + backend + database) with a single command
+npm run dev
+# or: docker compose up --build
 
 # Access the frontend
 # Open http://localhost:5173
+# Backend API: http://localhost:8080
+# Metrics: http://localhost:8080/metrics
 ```
 
 ---

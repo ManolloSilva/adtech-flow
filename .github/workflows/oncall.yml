@@ -1,0 +1,25 @@
+name: On-Call Responder
+
+on:
+  repository_dispatch:
+    types: [alert]
+  workflow_dispatch:
+    inputs:
+      alert:
+        description: 'Alert name'
+        required: true
+      severity:
+        description: 'Severity'
+        required: false
+        default: warning
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run responder
+        run: npx tsx scripts/oncall-responder.ts <(printf '{"alert":"%s","severity":"%s"}' "${{ github.event.inputs.alert || github.event.client_payload.alert }}" "${{ github.event.inputs.severity || github.event.client_payload.severity }}")

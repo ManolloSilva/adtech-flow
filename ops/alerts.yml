@@ -1,0 +1,29 @@
+groups:
+  - name: adtech-flow
+    rules:
+      - alert: BackendDown
+        expr: up{job="adtech-flow-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AdTech Flow backend is down"
+          description: "Backend health check has failed for over 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(adtech_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in AdTech Flow backend"
+          description: "Backend error rate exceeded 0.1/s for 5 minutes."
+
+      - alert: NoSimulationsPersisted
+        expr: increase(adtech_simulations_saved_total[1h]) == 0
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "No simulations persisted in the last hour"
+          description: "User journey may be broken; no auction results were saved."

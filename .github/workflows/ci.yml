@@ -13,7 +13,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
 
 jobs:
   lint-fast:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Run Oxlint
         working-directory: frontend
@@ -55,7 +55,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Run ESLint
         working-directory: frontend
@@ -80,16 +80,28 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Install build-tooling dependencies
-        run: npm ci
+        run: npm install
 
       - name: Frontend unit & component tests
         working-directory: frontend
         run: npm run test:run
 
       - name: Build-script unit tests (sellers.json ETL)
+        run: npm test
+
+  backend-test:
+    name: 🧪 Backend tests (SQLite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Run backend tests
+        working-directory: backend
         run: npm test
 
   build:
@@ -109,7 +121,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Typecheck
         working-directory: frontend
@@ -122,6 +134,19 @@ jobs:
       - name: Verify the MSW service worker ships in the build
         working-directory: frontend
         run: test -f dist/mockServiceWorker.js
+
+  security-scan:
+    name: 🔒 Security scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '0'
 
   data-snapshot:
     name: 🗺️ Ecosystem data snapshot (sellers.json ETL)
@@ -138,7 +163,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install build-tooling dependencies
-        run: npm ci
+        run: npm install
 
       # The committed snapshot is the deterministic curated seed, not a live
       # crawl: `sellers.json` contents change upstream, so a live fetch would make

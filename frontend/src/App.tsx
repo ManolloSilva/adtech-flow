@@ -27,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ecosystemNodesRaw from '@/data/ecosystem-nodes.json';
 import { humanizePhase } from '@/lib/roleStyles';
+import { saveSimulation } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { AUCTION_DURATION_MS, useAuctionStore } from '@/store/auctionStore';
 import type { EcosystemNodeData } from '@/types';
@@ -110,6 +111,14 @@ export default function App() {
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, []);
+
+  // Persist the completed simulation to the backend (best-effort, non-blocking).
+  useEffect(() => {
+    if (playback === 'completed') {
+      const traceId = `auc-${Date.now()}`;
+      void saveSimulation(config, { winningBid, verificationReport, bids }, traceId);
+    }
+  }, [playback, config, winningBid, verificationReport, bids]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-sans text-foreground">
