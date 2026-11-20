@@ -118,7 +118,7 @@ cd frontend && npm run test:run
 ### Deployment
 
 The frontend is deployed to GitHub Pages via `.github/workflows/deploy.yml`.
-Production URL: https://<your-username>.github.io/adtech-flow/
+Production URL: https://manollosilva.github.io/adtech-flow/
 
 ## Roadmap
 
