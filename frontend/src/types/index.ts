@@ -107,6 +107,8 @@ export interface AuctionConfig {
   includeVerification: boolean;
   /** When set, restricts the auction to a PMP deal. */
   dealId?: string;
+  /** Optional per-bidder latency override (ms) for timeout simulation (C-05). */
+  latencyMs?: Record<string, number>;
   /** Deterministic nonce so each auction run gets a fresh request id. */
   requestNonce: number;
 }

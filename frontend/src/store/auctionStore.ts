@@ -90,6 +90,8 @@ export interface AuctionState {
   winningBid: BidderResult | null;
   verificationReport: VerificationReport | null;
   packets: Packet[];
+  lastRequest: unknown | null;
+  lastResponse: unknown | null;
 
   /* ------------------------------ UI state ------------------------------ */
   selectedNodeId: string | null;
@@ -143,6 +145,8 @@ function deriveState(config: AuctionConfig, elapsedMs: number) {
     winningBid: phaseIndex >= phases.indexOf('GAM_ARBITRATION') ? result.winningBid : null,
     verificationReport:
       phaseIndex >= phases.indexOf('VERIFICATION_MEASURED') ? result.verificationReport : null,
+    lastRequest: result.lastRequest,
+    lastResponse: result.lastResponse,
   };
 }
 
@@ -216,6 +220,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => {
     bids: initial.bids,
     winningBid: null,
     verificationReport: null,
+    lastRequest: null,
+    lastResponse: null,
     packets: [],
 
     selectedNodeId: null,
@@ -298,6 +304,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => {
           patch.timeoutMs !== undefined ||
           patch.gdprConsent !== undefined ||
           patch.dealId !== undefined ||
+          patch.latencyMs !== undefined ||
           patch.activeBidders !== undefined
             ? config.requestNonce + 1
             : config.requestNonce),

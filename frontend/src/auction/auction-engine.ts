@@ -244,13 +244,14 @@ export function evaluateBid(
   partner: DemandPartner,
   config: AuctionConfig,
 ): BidderResult {
+  const latencyMs = config.latencyMs?.[partner.bidderId] ?? partner.latencyMs;
   const base: BidderResult = {
     bidderId: partner.bidderId,
     bidderName: partner.name,
     sspId: partner.sspId,
     cpm: partner.baseCpm,
     currency: 'USD',
-    latencyMs: partner.latencyMs,
+    latencyMs,
     status: 'submitted',
     ...(partner.dealId ? { dealId: partner.dealId } : {}),
   };
@@ -267,8 +268,8 @@ export function evaluateBid(
     return { ...base, status: 'no_bid', reason: `Not a deal holder for ${config.dealId}` };
   }
 
-  if (partner.latencyMs > config.timeoutMs) {
-    return { ...base, status: 'timed_out', reason: `Latency ${partner.latencyMs}ms > tmax ${config.timeoutMs}ms` };
+  if (latencyMs > config.timeoutMs) {
+    return { ...base, status: 'timed_out', reason: `Latency ${latencyMs}ms > tmax ${config.timeoutMs}ms` };
   }
 
   if (partner.baseCpm < config.floorPrice) {

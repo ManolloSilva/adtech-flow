@@ -7,7 +7,7 @@
  *           winning bid panel (A-05), bid waterfall, and IAS report (A-07)
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Layers, Network } from 'lucide-react';
 
 import { AuctionConfigPanel } from '@/components/auction/AuctionConfigPanel';
@@ -15,8 +15,9 @@ import { BidWaterfall } from '@/components/auction/BidWaterfall';
 import { PlaybackControls } from '@/components/auction/PlaybackControls';
 import { TimelineSlider } from '@/components/auction/TimelineSlider';
 import { VendorToggles } from '@/components/auction/VendorToggles';
-import { VerificationReportCard } from '@/components/auction/VerificationReportCard';
+
 import { WinningBidPanel } from '@/components/auction/WinningBidPanel';
+import { OpenRTBInspector } from '@/components/auction/OpenRTBInspector';
 import { CategoryFilterBar } from '@/components/ecosystem/CategoryFilterBar';
 import { EcosystemCanvas } from '@/components/ecosystem/EcosystemCanvas';
 import { NodeDetailSheet } from '@/components/ecosystem/NodeDetailSheet';
@@ -65,6 +66,8 @@ export default function App() {
     bids,
     winningBid,
     verificationReport,
+    lastRequest,
+    lastResponse,
     packets,
     selectedNodeId,
     visibleCategories,
@@ -98,6 +101,50 @@ export default function App() {
 
   const stepIndex = Math.max(0, phases.indexOf(phase));
   const eligibleBids = bids.filter((b) => b.status !== 'no_bid').length;
+
+  const [listView, setListView] = useState(false);
+
+  // Shareable simulation URLs (F-06): hydrate from URL on mount.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const patch: Parameters<typeof updateConfig>[0] = {};
+      let has = false;
+      const floor = params.get('floor');
+      if (floor !== null) { patch.floorPrice = parseFloat(floor); has = true; }
+      const timeout = params.get('timeout');
+      if (timeout !== null) { patch.timeoutMs = parseInt(timeout, 10); has = true; }
+      const gdpr = params.get('gdpr');
+      if (gdpr !== null) { patch.gdprConsent = gdpr === '1'; has = true; }
+      const deal = params.get('deal');
+      if (deal) { patch.dealId = deal; has = true; }
+      const dsp = params.get('dsp');
+      if (dsp) {
+        patch.activeBidders = dsp.split(',').filter(Boolean).map((c) => `node-dsp-${c}`);
+        has = true;
+      }
+      if (has) updateConfig(patch);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Push config changes back to the URL.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams();
+      params.set('floor', config.floorPrice.toFixed(2));
+      params.set('timeout', String(config.timeoutMs));
+      params.set('gdpr', config.gdprConsent ? '1' : '0');
+      if (config.dealId) params.set('deal', config.dealId);
+      params.set('dsp', config.activeBidders.map((id) => id.replace('node-dsp-', '')).join(','));
+      const url = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState(null, '', url);
+    } catch {
+      /* ignore */
+    }
+  }, [config.floorPrice, config.timeoutMs, config.gdprConsent, config.dealId, config.activeBidders]);
 
   // requestAnimationFrame is suspended while the tab is hidden, which would
   // otherwise freeze the simulation mid-flight and burn CPU on return. Pause
@@ -146,6 +193,14 @@ export default function App() {
             <Badge className="hidden border border-blue-500/20 bg-blue-500/10 text-blue-400 sm:inline-flex">
               Zero Media Spend
             </Badge>
+            <button
+              type="button"
+              onClick={() => { void navigator.clipboard?.writeText(window.location.href); }}
+              data-testid="copy-link"
+              className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:text-white"
+            >
+              Copy Link
+            </button>
           </div>
         </div>
       </header>
@@ -205,6 +260,15 @@ export default function App() {
                   <Badge variant="outline" className="border-slate-700 bg-slate-800 font-mono text-[10px] text-slate-400">
                     {elapsedMs.toFixed(0)}ms / {AUCTION_DURATION_MS}ms
                   </Badge>
+                  <button
+                    type="button"
+                    onClick={() => setListView((v) => !v)}
+                    data-testid="view-mode-list"
+                    aria-pressed={listView}
+                    className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:text-white"
+                  >
+                    {listView ? 'Canvas view' : 'List view'}
+                  </button>
                 </div>
               </div>
             </CardHeader>
@@ -215,20 +279,34 @@ export default function App() {
                 visibleCategories={visibleCategories}
                 onToggle={toggleCategory}
               />
-              <EcosystemCanvas
-                nodes={ecosystemNodes}
-                config={config}
-                bids={bids}
-                winningBid={winningBid}
-                packets={packets}
-                visibleCategories={visibleCategories}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={setSelectedNodeId}
-                viewMode={canvasViewMode}
-                activeVendorByCategory={activeVendorByCategory}
-                onSelectVendorForCategory={setActiveVendorForCategory}
-                className="h-[420px] lg:h-[560px]"
-              />
+              {listView ? (
+                <div className="h-[420px] overflow-auto lg:h-[560px]" data-testid="waterfall-list-view">
+                  <BidWaterfall
+                    bids={bids}
+                    activeBidders={config.activeBidders}
+                    onToggleBidder={toggleBidder}
+                    latencyMs={config.latencyMs}
+                    onLatencyChange={(bidderId, ms) =>
+                      updateConfig({ latencyMs: { ...config.latencyMs, [bidderId]: ms } })
+                    }
+                  />
+                </div>
+              ) : (
+                <EcosystemCanvas
+                  nodes={ecosystemNodes}
+                  config={config}
+                  bids={bids}
+                  winningBid={winningBid}
+                  packets={packets}
+                  visibleCategories={visibleCategories}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={setSelectedNodeId}
+                  viewMode={canvasViewMode}
+                  activeVendorByCategory={activeVendorByCategory}
+                  onSelectVendorForCategory={setActiveVendorForCategory}
+                  className="h-[420px] lg:h-[560px]"
+                />
+              )}
               <p className="text-[11px] text-slate-500">
                 {canvasViewMode === 'stage'
                   ? 'Stage view: click any stage dropdown to switch entities (DSP, SSP, Publisher) or Details to inspect.'
@@ -303,9 +381,15 @@ export default function App() {
                     totalBids={bids.length}
                     eligibleBids={eligibleBids}
                   />
-                  {verificationReport && config.includeVerification && (
-                    <VerificationReportCard report={verificationReport} />
-                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">OpenRTB</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <OpenRTBInspector request={lastRequest} response={lastResponse} />
                 </CardContent>
               </Card>
 
@@ -324,6 +408,10 @@ export default function App() {
                       bids={bids}
                       activeBidders={config.activeBidders}
                       onToggleBidder={toggleBidder}
+                    latencyMs={config.latencyMs}
+                    onLatencyChange={(bidderId, ms) =>
+                      updateConfig({ latencyMs: { ...config.latencyMs, [bidderId]: ms } })
+                    }
                     />
                   </ScrollArea>
                 </CardContent>

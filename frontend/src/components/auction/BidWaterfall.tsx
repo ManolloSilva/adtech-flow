@@ -4,6 +4,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { AccessibleRange } from '@/components/ui/slider';
 import { roleStyle } from '@/lib/roleStyles';
 import { cn } from '@/lib/utils';
 import type { BidderResult } from '@/types';
@@ -12,6 +13,8 @@ export interface BidWaterfallProps {
   bids: BidderResult[];
   activeBidders: string[];
   onToggleBidder: (bidderId: string) => void;
+  latencyMs?: Record<string, number>;
+  onLatencyChange?: (bidderId: string, ms: number) => void;
 }
 
 const STATUS_STYLES: Record<BidderResult['status'], { ring: string; badge: string; label: string }> = {
@@ -47,7 +50,7 @@ const STATUS_STYLES: Record<BidderResult['status'], { ring: string; badge: strin
   },
 };
 
-export function BidWaterfall({ bids, activeBidders, onToggleBidder }: BidWaterfallProps) {
+export function BidWaterfall({ bids, activeBidders, onToggleBidder, latencyMs, onLatencyChange }: BidWaterfallProps) {
   if (bids.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-700 p-3 text-xs text-slate-500">
@@ -103,6 +106,28 @@ export function BidWaterfall({ bids, activeBidders, onToggleBidder }: BidWaterfa
                 </Badge>
               )}
             </div>
+
+            {onLatencyChange && (
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">Latency injection</span>
+                  <span className="font-mono text-[10px] text-slate-400">
+                    {latencyMs?.[bid.bidderId] ?? bid.latencyMs}ms
+                  </span>
+                </div>
+                <AccessibleRange
+                  id={`latency-${bid.bidderId}`}
+                  value={latencyMs?.[bid.bidderId] ?? bid.latencyMs}
+                  min={0}
+                  max={400}
+                  step={5}
+                  onValueChange={(value) => onLatencyChange(bid.bidderId, value)}
+                  aria-label={`Latency injection for ${bid.bidderName} in milliseconds`}
+                  aria-valuetext={`${latencyMs?.[bid.bidderId] ?? bid.latencyMs} milliseconds`}
+                  data-testid={`latency-slider-${bid.bidderId}`}
+                />
+              </div>
+            )}
 
             {bid.reason && (
               <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{bid.reason}</p>

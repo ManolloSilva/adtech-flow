@@ -5,7 +5,7 @@
  * accessible name, activating them, and asserting the visible outcome. They are
  * the regression net for the canvas (M-01/M-03), the filter bar (M-05), the
  * detail sheet (M-04), the playback controls (A-02), the timeline (A-03), the
- * winning-bid panel (A-05), and the IAS report (A-07).
+ * winning-bid panel (A-05), and bid waterfall.
  *
  * React Flow's layout engine is stubbed (see below) because d3-zoom/d3-drag
  * require a real layout engine and throw in jsdom. Everything that is ours —
@@ -159,6 +159,7 @@ async function withDetailSheet(
 }
 
 beforeEach(() => {
+  window.history.replaceState(null, '', '/');
   actOnStore((s) => s.updateConfig({ ...DEFAULT_CONFIG }));
   actOnStore((s) => s.reset());
   actOnStore((s) => s.setCanvasViewMode('mesh'));
@@ -452,18 +453,6 @@ describe('A-06 — optional vendor toggles', () => {
     expect(store().phases).not.toContain('VERIFICATION_MEASURED');
   });
 
-  it('hides the verification report card when IAS is disabled', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    stepTo(AUCTION_DURATION_MS);
-    expect(screen.getByTestId('verification-report')).toBeInTheDocument();
-
-    await openConfigureTab(user);
-    await user.click(screen.getByTestId('vendor-includeVerification'));
-    expect(screen.queryByTestId('verification-report')).not.toBeInTheDocument();
-  });
-
   it('drops consent-requiring bidders when consent is withdrawn', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -484,54 +473,6 @@ describe('A-06 — optional vendor toggles', () => {
     await openConfigureTab(user);
     await user.click(screen.getByTestId('vendor-includeAudience'));
     expect(screen.queryByTestId('ecosystem-node-node-audience-permutive')).not.toBeInTheDocument();
-  });
-});
-
-describe('A-07 — IAS verification report', () => {
-  it('is hidden before the final phase', () => {
-    render(<App />);
-    expect(screen.queryByTestId('verification-report')).not.toBeInTheDocument();
-  });
-
-  it('renders viewability, IVT, and brand safety once measured', () => {
-    render(<App />);
-    stepTo(AUCTION_DURATION_MS);
-
-    expect(screen.getByTestId('verification-report')).toBeInTheDocument();
-    expect(screen.getByTestId('metric-viewability')).toBeInTheDocument();
-    expect(screen.getByTestId('metric-ivt')).toBeInTheDocument();
-    expect(screen.getByTestId('metric-brand-safety')).toBeInTheDocument();
-  });
-
-  it('reports a premium CPM as safe and clean', () => {
-    render(<App />);
-    stepTo(AUCTION_DURATION_MS);
-
-    expect(screen.getByTestId('metric-brand-safety')).toHaveTextContent('SAFE');
-    expect(screen.getByTestId('metric-ivt-classification')).toHaveTextContent('CLEAN');
-  });
-
-  it('derives the numbers from the winning CPM rather than hardcoding them', () => {
-    // Lowering the floor below Amazon's $1.25 makes Amazon the winner instead of
-    // TTD at $2.60, so the reported viewability must move.
-    render(<App />);
-
-    stepTo(AUCTION_DURATION_MS);
-    expect(store().winningBid?.bidderId).toBe('node-dsp-ttd');
-    const premium = screen.getByTestId('metric-viewability').textContent;
-
-    setConfig({ floorPrice: 1 });
-    stepTo(AUCTION_DURATION_MS);
-    expect(store().winningBid?.bidderId).toBe('node-dsp-ttd');
-
-    // Drop the two premium bidders so Amazon wins the auction outright.
-    actOnStore((s) => s.toggleBidder('node-dsp-ttd'));
-    actOnStore((s) => s.toggleBidder('node-dsp-dv360'));
-    stepTo(AUCTION_DURATION_MS);
-    expect(store().winningBid?.bidderId).toBe('node-dsp-amazon');
-
-    const lower = screen.getByTestId('metric-viewability').textContent;
-    expect(lower).not.toBe(premium);
   });
 });
 
