@@ -12,6 +12,10 @@ import { Layers, Network } from 'lucide-react';
 
 import { AuctionConfigPanel } from '@/components/auction/AuctionConfigPanel';
 import { BidWaterfall } from '@/components/auction/BidWaterfall';
+import { lazy, Suspense } from 'react';
+const DeveloperSandbox = lazy(() => import('@/components/sandbox/DeveloperSandbox').then((m) => ({ default: m.DeveloperSandbox })));
+
+import { AboutModal } from '@/components/AboutModal';
 import { PlaybackControls } from '@/components/auction/PlaybackControls';
 import { TimelineSlider } from '@/components/auction/TimelineSlider';
 import { VendorToggles } from '@/components/auction/VendorToggles';
@@ -102,7 +106,9 @@ export default function App() {
   const stepIndex = Math.max(0, phases.indexOf(phase));
   const eligibleBids = bids.filter((b) => b.status !== 'no_bid').length;
 
-  const [listView, setListView] = useState(false);
+  const [listView, setListView] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768,
+  );
 
   // Shareable simulation URLs (F-06): hydrate from URL on mount.
   useEffect(() => {
@@ -193,6 +199,7 @@ export default function App() {
             <Badge className="hidden border border-blue-500/20 bg-blue-500/10 text-blue-400 sm:inline-flex">
               Zero Media Spend
             </Badge>
+            <AboutModal />
             <button
               type="button"
               onClick={() => { void navigator.clipboard?.writeText(window.location.href); }}
@@ -364,9 +371,10 @@ export default function App() {
           </Card>
 
           <Tabs defaultValue="results" className="flex-1">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="results">Results</TabsTrigger>
-              <TabsTrigger value="config">Configure</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="results" data-testid="results-tab">Results</TabsTrigger>
+              <TabsTrigger value="config" data-testid="config-tab">Configure</TabsTrigger>
+              <TabsTrigger value="sandbox" data-testid="sandbox-tab">Sandbox</TabsTrigger>
             </TabsList>
 
             <TabsContent value="results" className="mt-2 space-y-4">
@@ -427,6 +435,18 @@ export default function App() {
                   <AuctionConfigPanel config={config} onChange={updateConfig} />
                   <Separator />
                   <VendorToggles config={config} onChange={updateConfig} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="sandbox" className="mt-2 space-y-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Developer Sandbox</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Suspense fallback={<div className="text-sm text-slate-400">Loading sandbox…</div>}>
+                    <DeveloperSandbox />
+                  </Suspense>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -97,21 +97,21 @@ Status labels: `📋 needs-grooming` | `✅ agent-ready` | `🔨 in-progress` | 
 
 | ID | Title | Priority | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| D-01 | Monaco editor for `buyer.js` (`generateBid`) | P2 | 📋 | |
-| D-02 | Monaco editor for `seller.js` (`scoreAd`) | P2 | 📋 | |
-| D-03 | Live re-execution: editing scripts re-runs auction | P2 | 📋 | |
-| D-04 | Preset templates: First-Price, Second-Price, Floor-Aware, Deal-ID-Priority | P2 | 📋 | |
+| D-01 | Monaco editor for `buyer.js` (`generateBid`) | P2 | ✔️ | |
+| D-02 | Monaco editor for `seller.js` (`scoreAd`) | P2 | ✔️ | |
+| D-03 | Live re-execution: editing scripts re-runs auction | P2 | ✔️ | |
+| D-04 | Preset templates: First-Price, Second-Price, Floor-Aware, Deal-ID-Priority | P2 | ✔️ | |
 
 ### POLISH & LAUNCH
 
 | ID | Title | Priority | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | P-01 | Storybook component documentation | P2 | 📋 | Document node cards, inspector panel, timeline slider |
-| P-02 | Plausible Analytics integration (cookieless, GDPR-safe) | P2 | 📋 | |
-| P-03 | About modal with legal disclaimer and project description | P2 | 📋 | |
-| P-04 | Mobile-responsive layout (canvas → list view on small screens) | P2 | 📋 | |
-| P-05 | README and docs polish for open-source community launch | P2 | 📋 | |
-| P-06 | Prepare launch post for AdTech.dev / Prebid Slack / LinkedIn | P2 | 📋 | |
+| P-02 | Plausible Analytics integration (cookieless, GDPR-safe) | P2 | ✔️ | |
+| P-03 | About modal with legal disclaimer and project description | P2 | ✔️ | |
+| P-04 | Mobile-responsive layout (canvas → list view on small screens) | P2 | ✔️ | |
+| P-05 | README and docs polish for open-source community launch | P2 | ✔️ | |
+| P-06 | Prepare launch post for AdTech.dev / Prebid Slack / LinkedIn | P2 | ✔️ | |
 
 ---
 
